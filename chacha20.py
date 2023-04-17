@@ -1,13 +1,12 @@
-# a = b'101011'
-# b = b'010101'
-# c = a ^ b
-# print(c)
-import os
-import pickle
-import random
+# Dean Kelley
+# 4/17/2023
+# TCSS 581 Chacha20 Assignment
+
+import time
 from binascii import hexlify
 
 
+# Integer addition of two bytes modulo 32
 def badd(b1, b2):
     b1_int = int.from_bytes(b1, byteorder='big')
     b2_int = int.from_bytes(b2, byteorder='big')
@@ -15,11 +14,12 @@ def badd(b1, b2):
     return ba.to_bytes(4, byteorder='big')
 
 
+# XOR of to bytes
 def bxor(b1, b2): # use xor for bytes
     return bytes(a1 ^ a2 for a1, a2 in zip(b1, b2))
 
 
-# rot performs the rotation by b bits
+# Rotation by b bits
 def rot(x, b):
     xint = int.from_bytes(x, byteorder='big')
     shift_int = ((xint << b) | (xint >> 32 - b)) & 0xffffffff
@@ -27,6 +27,7 @@ def rot(x, b):
     return byte_rotated
 
 
+# QuarterRound
 def qr(b1, b2, b3, b4):
     b1 = badd(b1, b2)
     b4 = rot(bxor(b4, b1), 16)
@@ -39,6 +40,7 @@ def qr(b1, b2, b3, b4):
     return b1, b2, b3, b4
 
 
+# Performs column and diagonal quartrounds to block
 def inner_block(array):
     array[0], array[4], array[8], array[12] = qr(array[0], array[4], array[8], array[12])
     array[1], array[5], array[9], array[13] = qr(array[1], array[5], array[9], array[13])
@@ -50,6 +52,8 @@ def inner_block(array):
     array[3], array[4], array[9], array[14] = qr(array[3], array[4], array[9], array[14])
     return array
 
+
+# Creates and processes the serialized block
 def chacha20_block(key, counter, nonce):
     c = bytes.fromhex('617078653320646e79622d326b206574')
     state = []
@@ -77,19 +81,27 @@ def chacha20_block(key, counter, nonce):
     return serialized_block
 
 
+# Ceiling division
 def ceildiv(a, b):
     return -(a // -b)
 
 
+# Chacha20 encryption/decryption algorithm
 def chacha20_encrypt(key, counter, nonce, plaintext):
     encrypted_message = b''
+    time_nm = []
+    key_stream = b''
     for i in range((ceildiv(len(plaintext), 64))):
+        tic = time.time_ns()
         key_stream = chacha20_block(key, badd(counter, i.to_bytes(4, byteorder='big')), nonce)
+        toc = time.time_ns()
+        time_nm.append(toc - tic)
         print('Key Stream round ' + str(i+1) + ': ' + str(hexlify(key_stream)))
         block = plaintext[i * 64: i * 64 + 64]
         print('Block round ' + str(i+1) + ': ' + str(hexlify(block)))
         enc = bxor(block, key_stream)
         encrypted_message += enc
+    print('Bits per second = ' + str(round(len(key_stream) * 8 / (sum(time_nm) / len(time_nm)) * 10**9)))
     return encrypted_message
 
 
