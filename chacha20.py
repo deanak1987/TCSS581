@@ -14,7 +14,7 @@ def badd(b1, b2):
     return ba.to_bytes(4, byteorder='big')
 
 
-# XOR of to bytes
+# XOR of two bytes
 def bxor(b1, b2): # use xor for bytes
     return bytes(a1 ^ a2 for a1, a2 in zip(b1, b2))
 
