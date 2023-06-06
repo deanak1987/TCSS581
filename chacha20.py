@@ -73,7 +73,6 @@ def chacha20_block(key, counter, nonce):
         working_state = inner_block(working_state)
     block = []
     for i in range(len(state)):
-        # block.append(working_state[i])
         block.append(badd(state[i], working_state[i]))
     serialized_block = b''
     for i in range(len(state)):
